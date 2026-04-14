@@ -95,7 +95,7 @@
 <body>
 <div class="app">
   <div class="header">
-    <h1>StaffClock</h1>
+    <h1>Vault Group Clocking System</h1>
     <p>Remote team time tracking &amp; overtime management</p>
   </div>
 
@@ -103,7 +103,7 @@
     <button class="tab active" onclick="showTab('clock')">Clock In/Out</button>
     <button class="tab" onclick="showTab('logs')">Time Logs</button>
     <button class="tab" onclick="showTab('monthly')">Monthly Summary</button>
-    <button class="tab" onclick="showTab('staff')">Staff</button>
+    <button class="tab" onclick="showTab('staff')">Team</button>
   </div>
 
   <div id="tab-clock">
@@ -111,7 +111,9 @@
 
     <div class="card">
       <div class="section-title">Select staff member</div>
-      <div class="staff-selector" id="staff-grid"></div>
+      <select id="staff-dropdown" class="staff-selector">
+       <option value="">-- Select staff member --</option>
+      </select>
     </div>
 
     <div class="card" id="clock-panel" style="display:none;">
@@ -205,7 +207,7 @@ const KEY_SETTINGS = 'sc_settings';
 
 let staff = [];
 let logs = [];
-let settings = { stdHours: 8 };
+let settings = { shiftStart: '07:00', shiftEnd: '16:00'};
 let selectedStaff = null;
 let gpsCoords = null;
 let gpsStatus = 'loading';
@@ -217,8 +219,24 @@ function load() {
   try { settings = JSON.parse(localStorage.getItem(KEY_SETTINGS) || '{"stdHours":8}'); } catch(e) { settings = {stdHours:8}; }
   if (!staff.length) {
     staff = [
-      { id: 's1', name: 'Alice Dlamini', role: 'Developer' },
-      { id: 's2', name: 'Bongani Mokoena', role: 'Designer' },
+      { id: 's1', name: 'Adaan Els', role: 'Field Technician Manager' },
+      { id: 's2', name: 'Allan Nhlapo', role: 'Technician' },
+      { id: 's3', name: 'Alois Coetzee', role: 'Technician' },
+      { id: 's4', name: 'Bonga Mtongana', role: 'Technician' },
+      { id: 's5', name: 'Chance Mauba', role: 'Technician' },
+      { id: 's6', name: 'Glen Chilawo', role: 'Technician' },
+      { id: 's7', name: 'Godfrey Nkuna', role: 'Technician' },
+      { id: 's8', name: 'Kabelo Motaung', role: 'Technician' },
+      { id: 's9', name: 'Latin Ndlovu', role: 'Technician' },
+      { id: 's10', name: 'Macdonald Maaka', role: 'Technician' },
+      { id: 's11', name: 'Mario van Wyk', role: 'Technician' },
+      { id: 's12', name: 'Nkululeko Mbongwa', role: 'Technician' },
+      { id: 's13', name: 'Pule Mokone', role: 'Technician' },
+      { id: 's14', name: 'Sihle Ntuli', role: 'Technician' },
+      { id: 's15', name: 'Sindiso Sithole', role: 'Technician' },
+      { id: 's16', name: 'Sonnyboy Shabalala', role: 'Technician' },
+      { id: 's17', name: 'Thabang Mhlakaza', role: 'Technician' },
+      { id: 's18', name: 'Godfrey Nkuna', role: 'Technician' }
     ];
     save();
   }
@@ -596,7 +614,7 @@ function exportCSV() {
   const csv = rows.map(r => r.join(',')).join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'staffclock_' + (mFilter||'all') + '.csv';
+  a.download = '_' + (mFilter||'all') + '.csv';
   a.click();
 }
 
