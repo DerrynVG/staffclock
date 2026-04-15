@@ -216,7 +216,12 @@ let clockInterval = null;
 function load() {
   try { staff = JSON.parse(localStorage.getItem(KEY_STAFF) || '[]'); } catch(e) { staff = []; }
   try { logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]'); } catch(e) { logs = []; }
-  try { settings = JSON.parse(localStorage.getItem(KEY_SETTINGS) || '{"stdHours":8}'); } catch(e) { settings = {stdHours:8}; }
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY_SETTINGS) || 'null');
+    if (s) settings = s;
+    if (!settings.shiftStart) settings.shiftStart = '07:00';
+    if (!settings.shiftEnd) settings.shiftEnd = '16:00';
+  } catch(e) { settings = { shiftStart: '07:00', shiftEnd: '16:00' }; }
   if (!staff.length) {
     staff = [
       { id: 's1', name: 'Adaan Els', role: 'Field Technician Manager' },
@@ -279,6 +284,36 @@ function getMonthLabel(key) {
   return d.toLocaleDateString('en-ZA', {month:'long', year:'numeric'});
 }
 
+ function shiftStartMins() {
+  const [h,m] = settings.shiftStart.split(':').map(Number);
+  return h * 60 + m;
+}
+function shiftEndMins() {
+  const [h,m] = settings.shiftEnd.split(':').map(Number);
+  return h * 60 + m;
+}
+function shiftDurationMins() {
+  return shiftEndMins() - shiftStartMins();
+}
+function timeOfDayMins(iso) {
+  const d = new Date(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+function calcOT(clockInISO, clockOutISO) {
+  if (!clockOutISO) return 0;
+  const inMins = timeOfDayMins(clockInISO);
+  const outMins = timeOfDayMins(clockOutISO);
+  let ot = 0;
+  if (inMins < shiftStartMins()) ot += (shiftStartMins() - inMins);
+  if (outMins > shiftEndMins()) ot += (outMins - shiftEndMins());
+  return ot;
+}
+function calcOTLive(clockInISO) {
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+  if (nowMins > shiftEndMins()) return nowMins - shiftEndMins();
+  return 0;
+}
+ 
 function getCurrentlyClockedIn(staffId) {
   return logs.find(l => l.staffId === staffId && !l.clockOut);
 }
@@ -448,7 +483,7 @@ function handleClock() {
   } else {
     const otAuth = document.getElementById('ot-input').value.trim();
     const duration = Math.floor((Date.now() - new Date(active.clockIn).getTime()) / 60000);
-    const otMins = Math.max(0, duration - settings.stdHours * 60);
+    const otMins = calcOT(active.clockIn, new Date().toISOString());
     if (otMins > 0 && !otAuth) {
       showMsg('Overtime detected (' + fmt(otMins) + '). Please enter an overtime authorisation number.', 'warn');
       return;
@@ -590,7 +625,8 @@ function removeStaff(id) {
 }
 
 function saveSettings() {
-  settings.stdHours = parseFloat(document.getElementById('std-hours').value) || 8;
+  settings.shiftStart = document.getElementById('shift-start').value || '07:00';
+  settings.shiftEnd = document.getElementById('shift-end').value || '16:00';
   save();
 }
 
