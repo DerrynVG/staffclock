@@ -111,10 +111,9 @@
 
     <div class="card">
       <div class="section-title">Select staff member</div>
-      <div class="staff-selector" id="staff-grid"></div>
-      <select id="staff-dropdown" class="staff-selector">
-       <option value="">-- Select staff member --</option>
-      </select>
+      <select id="staff-grid" onchange="selectStaffFromDropdown(this.value)" style="width:100%; padding:10px; border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); font-size:14px; background:var(--color-background-primary); color:var(--color-text-primary);">
+  <option value="">-- Select your name --</option>
+</select>
     </div>
 
     <div class="card" id="clock-panel" style="display:none;">
@@ -521,6 +520,15 @@ function renderStaffGrid() {
       <span class="staff-status ${active?'status-in':'status-out'}">${active?'Clocked in':'Clocked out'}</span>
     </div>`;
   }).join('');
+}
+
+ function selectStaffFromDropdown(id) {
+  const s = staff.find(x => x.id === id);
+  if (!s) {
+    document.getElementById('clock-panel').style.display = 'none';
+    return;
+  }
+  selectStaff(s);
 }
 
 function renderLogs() {
