@@ -1,676 +1,855 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>StaffClock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Georgia', serif; background: var(--color-background-tertiary); color: var(--color-text-primary); min-height: 100vh; }
+:root {
+  --navy: #0f2040;
+  --navy-light: #1a3560;
+  --teal: #00b894;
+  --teal-dark: #00916e;
+  --orange: #e17055;
+  --orange-dark: #c0572e;
+  --amber: #f0a500;
+  --amber-dark: #c07800;
+  --red: #d63031;
+  --red-dark: #a52020;
+  --blue: #0984e3;
+  --blue-dark: #0660a8;
+  --surface: #f7f9fc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1a2640;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --shadow: 0 2px 12px rgba(15,32,64,0.10);
+  --shadow-lg: 0 8px 32px rgba(15,32,64,0.16);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+.app { max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
 
-  .app { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem; }
+/* HEADER */
+.header { background: var(--navy); color: white; padding: 20px 20px 16px; position: sticky; top: 0; z-index: 100; }
+.header-top { display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.logo span { color: var(--teal); }
+.live-time { font-family: 'DM Mono', monospace; font-size: 18px; color: var(--teal); font-weight: 500; }
+.live-date { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 4px; }
 
-  .header { text-align: center; margin-bottom: 2rem; }
-  .header h1 { font-size: 28px; font-weight: 400; letter-spacing: -0.5px; }
-  .header p { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+/* NAV */
+.nav { background: var(--navy-light); display: flex; border-bottom: 2px solid rgba(255,255,255,0.08); }
+.nav-btn { flex: 1; padding: 12px 4px; border: none; background: transparent; color: rgba(255,255,255,0.55); font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.nav-btn svg { width: 18px; height: 18px; }
+.nav-btn.active { color: var(--teal); border-bottom: 2px solid var(--teal); margin-bottom: -2px; }
 
-  .tabs { display: flex; gap: 0; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 1.5rem; background: var(--color-background-secondary); }
-  .tab { flex: 1; padding: 10px; font-size: 13px; border: none; background: transparent; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
-  .tab.active { background: var(--color-background-primary); color: var(--color-text-primary); font-weight: 500; }
+/* CONTENT */
+.content { padding: 16px; }
+.page { display: none; }
+.page.active { display: block; }
 
-  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px; border: 1px solid var(--border); }
+.card-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
 
-  .staff-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
-  .staff-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px; cursor: pointer; transition: all 0.15s; }
-  .staff-card:hover { border-color: var(--color-border-primary); }
-  .staff-card.selected { border: 2px solid #185FA5; background: #E6F1FB; }
-  .staff-name { font-size: 14px; font-weight: 500; }
-  .staff-role { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
-  .staff-status { font-size: 11px; margin-top: 6px; padding: 2px 8px; border-radius: 99px; display: inline-block; }
-  .status-in { background: #EAF3DE; color: #3B6D11; }
-  .status-out { background: #F1EFE8; color: #5F5E5A; }
+/* STAFF DROPDOWN */
+.staff-select-wrap { position: relative; }
+.staff-select { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; font-family: 'DM Sans', sans-serif; color: var(--text); background: white; appearance: none; cursor: pointer; transition: border-color 0.2s; }
+.staff-select:focus { outline: none; border-color: var(--teal); }
+.staff-select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted); }
 
-  .clock-display { text-align: center; padding: 1.5rem 0; }
-  .clock-time { font-size: 48px; font-weight: 300; letter-spacing: -2px; font-family: 'Georgia', serif; }
-  .clock-date { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+/* GPS */
+.gps-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-sm); background: #f0faf7; border: 1px solid #b2dfdb; margin: 12px 0; }
+.gps-bar.error { background: #fff3f3; border-color: #ffcdd2; }
+.gps-bar.loading { background: #fff8e1; border-color: #ffe082; }
+.gps-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+.gps-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
+.gps-dot.error { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.gps-text { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
 
-  .gps-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 12px; color: var(--color-text-secondary); margin: 12px 0; display: flex; align-items: center; gap: 8px; }
-  .gps-dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
-  .gps-dot.loading { background: #EF9F27; }
-  .gps-dot.error { background: #E24B4A; }
+/* SESSION INFO */
+.session-active { background: linear-gradient(135deg, #e8faf5, #d4f5ea); border: 1.5px solid var(--teal); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px; }
+.session-active-label { font-size: 11px; font-weight: 600; color: var(--teal-dark); text-transform: uppercase; letter-spacing: 0.6px; }
+.session-active-time { font-size: 15px; font-weight: 500; color: var(--text); margin-top: 3px; }
 
-  .ot-section { border-top: 0.5px solid var(--color-border-tertiary); padding-top: 1rem; margin-top: 1rem; }
-  .ot-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px; }
-  .ot-input { width: 100%; padding: 8px 12px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); font-size: 14px; background: var(--color-background-primary); color: var(--color-text-primary); }
-  .ot-input:focus { outline: none; border-color: #185FA5; }
+/* METRICS */
+.metrics-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.metric { background: var(--surface); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; border: 1px solid var(--border); }
+.metric-val { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.metric-val.green { color: var(--teal-dark); }
+.metric-val.orange { color: var(--orange); }
+.metric-val.red { color: var(--red); }
+.metric-lbl { font-size: 10px; color: var(--text-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-  .btn { padding: 10px 24px; border-radius: var(--border-radius-md); border: none; font-size: 14px; cursor: pointer; transition: all 0.15s; font-family: 'Georgia', serif; }
-  .btn-in { background: #1D9E75; color: white; width: 100%; margin-top: 1rem; font-size: 15px; padding: 14px; }
-  .btn-in:hover { background: #0F6E56; }
-  .btn-out { background: #E24B4A; color: white; width: 100%; margin-top: 1rem; font-size: 15px; padding: 14px; }
-  .btn-out:hover { background: #A32D2D; }
-  .btn-add { background: #185FA5; color: white; padding: 8px 16px; font-size: 13px; }
-  .btn-add:hover { background: #0C447C; }
-  .btn-sm { border: 0.5px solid var(--color-border-tertiary); background: transparent; color: var(--color-text-secondary); padding: 6px 12px; font-size: 12px; }
-  .btn-sm:hover { background: var(--color-background-secondary); }
+/* OT AUTH */
+.ot-auth-section { background: #fff8e1; border: 1.5px solid var(--amber); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 14px; }
+.ot-auth-label { font-size: 12px; font-weight: 600; color: var(--amber-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.ot-auth-input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--amber); border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Mono', monospace; background: white; color: var(--text); }
+.ot-auth-input:focus { outline: none; border-color: var(--amber-dark); }
+.ot-auth-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 
-  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
-  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; }
-  .metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
-  .metric-value { font-size: 22px; font-weight: 500; }
-  .metric-value.ot { color: #D85A30; }
-  .metric-value.ok { color: #1D9E75; }
+/* BUTTONS */
+.btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius-sm); font-size: 16px; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: 0.2px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:active { transform: scale(0.98); }
+.btn-clockin { background: var(--teal); color: white; }
+.btn-clockin:hover { background: var(--teal-dark); }
+.btn-clockout { background: var(--red); color: white; }
+.btn-clockout:hover { background: var(--red-dark); }
+.btn-secondary { background: var(--navy); color: white; padding: 10px 16px; width: auto; font-size: 13px; border-radius: var(--radius-sm); }
+.btn-secondary:hover { background: var(--navy-light); }
+.btn-export { background: var(--blue); color: white; padding: 10px 16px; width: auto; font-size: 13px; border-radius: var(--radius-sm); }
 
-  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .log-table th { text-align: left; padding: 8px 10px; color: var(--color-text-secondary); font-weight: 400; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
-  .log-table td { padding: 8px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
-  .log-table tr:last-child td { border-bottom: none; }
-  .ot-badge { background: #FAECE7; color: #993C1D; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 4px; }
+/* SCHEDULE OVERRIDE */
+.schedule-override { background: #f0f7ff; border: 1.5px solid var(--blue); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 14px; }
+.schedule-override-label { font-size: 12px; font-weight: 600; color: var(--blue-dark); margin-bottom: 10px; }
+.time-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.time-input-group label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+.time-input-group input[type=time] { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Mono', monospace; background: white; }
+.toggle-override { font-size: 12px; color: var(--blue); cursor: pointer; text-decoration: underline; margin-bottom: 10px; display: inline-block; }
 
-  .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
-  .filter-row select { padding: 7px 10px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); font-size: 13px; background: var(--color-background-primary); color: var(--color-text-primary); }
-  .filter-row label { font-size: 13px; color: var(--color-text-secondary); }
+/* FILTERS */
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.filter-select { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text); background: white; flex: 1; min-width: 120px; }
+.filter-select:focus { outline: none; border-color: var(--teal); }
 
-  .empty { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 14px; }
+/* LOGS TABLE */
+.log-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.log-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 520px; }
+.log-table th { text-align: left; padding: 8px 10px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+.log-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.log-table tr:last-child td { border-bottom: none; }
+.log-table tr:hover td { background: var(--surface); }
+.badge { display: inline-block; padding: 2px 7px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+.badge-ot { background: #fff0ec; color: #c0572e; }
+.badge-early { background: #fff8e1; color: #c07800; }
+.badge-weekend { background: #f3e8ff; color: #7c3aed; }
+.badge-ph { background: #fce4ec; color: #ad1457; }
+.badge-active { background: #e8faf5; color: var(--teal-dark); }
+.badge-warn { background: #fff3cd; color: #856404; }
 
-  .add-staff-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin-top: 1rem; }
-  .form-group { display: flex; flex-direction: column; gap: 4px; }
-  .form-group label { font-size: 12px; color: var(--color-text-secondary); }
-  .form-group input, .form-group select { padding: 8px 10px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); font-size: 13px; background: var(--color-background-primary); color: var(--color-text-primary); }
+/* MONTHLY SUMMARY */
+.summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.summary-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+.summary-stat-val { font-size: 24px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.summary-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.person-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; }
+.person-card.warning { border-color: var(--amber); background: #fffbf0; }
+.person-card.warning .warn-flag { display: flex; align-items: center; gap: 6px; background: var(--amber); color: white; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 99px; margin-bottom: 8px; width: fit-content; }
+.warn-flag { display: none; }
+.person-name { font-size: 15px; font-weight: 600; }
+.person-role { font-size: 12px; color: var(--text-muted); }
+.person-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 10px; }
+.person-stat { text-align: center; }
+.person-stat-val { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.person-stat-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
 
-  .msg { padding: 10px 14px; border-radius: var(--border-radius-md); font-size: 13px; margin-bottom: 1rem; }
-  .msg-success { background: #EAF3DE; color: #3B6D11; }
-  .msg-error { background: #FCEBEB; color: #A32D2D; }
-  .msg-warn { background: #FAEEDA; color: #854F0B; }
+/* SETTINGS */
+.setting-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.setting-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.setting-hint { font-size: 11px; color: var(--text-muted); }
+.setting-input { padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Sans', sans-serif; background: white; }
+.setting-input:focus { outline: none; border-color: var(--teal); }
 
-  .section-title { font-size: 15px; font-weight: 500; margin-bottom: 1rem; }
-  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-  .summary-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
-  .summary-name { font-size: 13px; font-weight: 500; }
-  .summary-detail { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
-  .summary-hours { font-size: 18px; font-weight: 500; margin-top: 6px; }
-  .summary-ot { font-size: 12px; color: #D85A30; }
+/* STAFF MGMT */
+.staff-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.staff-row:last-child { border-bottom: none; }
+.staff-row-name { font-size: 14px; font-weight: 500; }
+.staff-row-role { font-size: 12px; color: var(--text-muted); }
+.btn-remove { background: #fff0ec; color: var(--orange-dark); border: none; padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.add-staff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.add-staff-grid input { padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: 'DM Sans', sans-serif; }
+.btn-add { background: var(--navy); color: white; border: none; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; grid-column: span 2; }
 
-  .currently-clocked { background: #E1F5EE; border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; color: #0F6E56; margin-bottom: 1rem; }
+/* EMPTY */
+.empty { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 14px; }
+.msg { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 14px; font-weight: 500; }
+.msg-success { background: #e8faf5; color: var(--teal-dark); border: 1px solid #b2dfdb; }
+.msg-error { background: #fff0ec; color: var(--orange-dark); border: 1px solid #ffccbc; }
+.msg-warn { background: #fff8e1; color: var(--amber-dark); border: 1px solid #ffe082; }
+
+@media (max-width: 360px) {
+  .person-stats { grid-template-columns: repeat(2,1fr); }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
-    <h1>Vault Group Clocking System</h1>
-    <p>Remote team time tracking &amp; overtime management</p>
+    <div class="header-top">
+      <div class="logo">Staff<span>Clock</span></div>
+      <div class="live-time" id="live-time">--:--:--</div>
+    </div>
+    <div class="live-date" id="live-date"></div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('clock')">Clock In/Out</button>
-    <button class="tab" onclick="showTab('logs')">Time Logs</button>
-    <button class="tab" onclick="showTab('monthly')">Monthly Summary</button>
-    <button class="tab" onclick="showTab('staff')">Team</button>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('clock',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Clock
+    </button>
+    <button class="nav-btn" onclick="showPage('logs',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+      Logs
+    </button>
+    <button class="nav-btn" onclick="showPage('monthly',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Monthly
+    </button>
+    <button class="nav-btn" onclick="showPage('settings',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Settings
+    </button>
   </div>
 
-  <div id="tab-clock">
-    <div id="msg-area"></div>
+  <!-- CLOCK PAGE -->
+  <div id="page-clock" class="page active content">
+    <div id="msg-clock"></div>
 
     <div class="card">
-      <div class="section-title">Select staff member</div>
-      <select id="staff-grid" onchange="selectStaffFromDropdown(this.value)" style="width:100%; padding:10px; border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); font-size:14px; background:var(--color-background-primary); color:var(--color-text-primary);">
-  <option value="">-- Select your name --</option>
-</select>
-    </div>
-
-    <div class="card" id="clock-panel" style="display:none;">
-      <div class="clock-display">
-        <div class="clock-time" id="live-clock">--:--:--</div>
-        <div class="clock-date" id="live-date"></div>
-      </div>
-
-      <div class="gps-box" id="gps-box">
-        <div class="gps-dot loading" id="gps-dot"></div>
-        <span id="gps-text">Acquiring GPS location...</span>
-      </div>
-
-      <div id="session-info" style="display:none;" class="currently-clocked"></div>
-
-      <div class="ot-section" id="ot-section" style="display:none;">
-        <div class="ot-label">Overtime authorisation number (required for overtime)</div>
-        <input class="ot-input" id="ot-input" type="text" placeholder="e.g. OT-2024-001" />
-        <div style="font-size:11px; color:var(--color-text-secondary); margin-top:4px;">Leave blank if not applicable</div>
-      </div>
-
-      <button class="btn btn-in" id="clock-btn" onclick="handleClock()">Clock In</button>
-    </div>
-
-    <div class="card" id="todays-metrics" style="display:none;">
-      <div class="section-title">Today's metrics</div>
-      <div class="metrics">
-        <div class="metric"><div class="metric-label">Clock in</div><div class="metric-value" id="m-in">--:--</div></div>
-        <div class="metric"><div class="metric-label">Hours worked</div><div class="metric-value" id="m-hours">0.0h</div></div>
-        <div class="metric"><div class="metric-label">Overtime</div><div class="metric-value ot" id="m-ot">0.0h</div></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="tab-logs" style="display:none;">
-    <div class="card">
-      <div class="filter-row">
-        <label>Staff:</label>
-        <select id="log-staff-filter" onchange="renderLogs()">
-          <option value="all">All staff</option>
+      <div class="card-title">Who are you?</div>
+      <div class="staff-select-wrap">
+        <select class="staff-select" id="staff-dropdown" onchange="onStaffSelect(this.value)">
+          <option value="">— Select your name —</option>
         </select>
-        <label>Month:</label>
-        <select id="log-month-filter" onchange="renderLogs()">
-        </select>
-        <button class="btn btn-sm" onclick="exportCSV()">Export CSV</button>
+        <div class="staff-select-arrow">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
       </div>
-      <div id="logs-body"></div>
+    </div>
+
+    <div id="clock-panel" style="display:none;">
+      <div class="card">
+        <div class="card-title">GPS Location</div>
+        <div class="gps-bar loading" id="gps-bar">
+          <div class="gps-dot loading" id="gps-dot"></div>
+          <div class="gps-text" id="gps-text">Acquiring location...</div>
+        </div>
+      </div>
+
+      <div id="session-active-card" style="display:none;" class="card">
+        <div class="session-active" id="session-active-inner"></div>
+        <div class="metrics-row" id="live-metrics"></div>
+      </div>
+
+      <div id="ot-auth-card" style="display:none;" class="ot-auth-section">
+        <div class="ot-auth-label">⚠ Overtime Detected — Authorisation Required</div>
+        <input class="ot-auth-input" id="ot-input" type="text" placeholder="Enter OT authorisation number" />
+        <div class="ot-auth-hint">Contact the office for an authorisation number before clocking out with overtime.</div>
+      </div>
+
+      <div id="override-toggle-wrap">
+        <span class="toggle-override" onclick="toggleOverride()">+ Set custom shift times for today</span>
+      </div>
+      <div id="override-section" style="display:none;" class="schedule-override">
+        <div class="schedule-override-label">Custom shift times (today only)</div>
+        <div class="time-inputs">
+          <div class="time-input-group">
+            <label>Shift start</label>
+            <input type="time" id="override-start" value="07:00" />
+          </div>
+          <div class="time-input-group">
+            <label>Shift end</label>
+            <input type="time" id="override-end" value="16:00" />
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-clockin" id="clock-btn" onclick="handleClock()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Clock In
+      </button>
     </div>
   </div>
 
-  <div id="tab-monthly" style="display:none;">
+  <!-- LOGS PAGE -->
+  <div id="page-logs" class="page content">
+    <div class="filter-row">
+      <select class="filter-select" id="log-staff-filter" onchange="renderLogs()">
+        <option value="all">All staff</option>
+      </select>
+      <select class="filter-select" id="log-month-filter" onchange="renderLogs()"></select>
+      <button class="btn-export btn" style="width:auto;padding:10px 14px;font-size:13px;" onclick="exportCSV()">Export CSV</button>
+    </div>
     <div class="card">
-      <div class="filter-row">
-        <label>Month:</label>
-        <select id="monthly-filter" onchange="renderMonthly()"></select>
+      <div class="log-scroll">
+        <div id="logs-body"></div>
       </div>
-      <div id="monthly-body"></div>
     </div>
   </div>
 
-  <div id="tab-staff" style="display:none;">
+  <!-- MONTHLY PAGE -->
+  <div id="page-monthly" class="page content">
+    <div class="filter-row">
+      <select class="filter-select" id="monthly-staff-filter" onchange="renderMonthly()">
+        <option value="all">All staff</option>
+      </select>
+      <select class="filter-select" id="monthly-month-filter" onchange="renderMonthly()"></select>
+    </div>
+    <div id="monthly-body"></div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div id="page-settings" class="page content">
     <div class="card">
-      <div class="section-title">Manage staff</div>
+      <div class="card-title">Default Shift Hours</div>
+      <div class="setting-row">
+        <div class="setting-label">Shift start (Mon–Fri)</div>
+        <input type="time" id="set-start" class="setting-input" value="07:00" onchange="saveSettings()" />
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Shift end (Mon–Fri)</div>
+        <input type="time" id="set-end" class="setting-input" value="16:00" onchange="saveSettings()" />
+        <div class="setting-hint" id="shift-duration-note"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Overtime Rates</div>
+      <div class="setting-row">
+        <div class="setting-label">Weekday OT rate</div>
+        <div class="setting-hint">1× — standard pay for hours outside 07:00–16:00</div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Saturday rate</div>
+        <div class="setting-hint">1.5× — all hours are overtime</div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Sunday & Public Holiday rate</div>
+        <div class="setting-hint">2× — all hours are overtime</div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Monthly hours warning threshold</div>
+        <input type="number" id="set-warn-hours" class="setting-input" value="35" min="1" max="300" onchange="saveSettings()" />
+        <div class="setting-hint">Staff will be flagged when they reach this many hours in a month</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Manage Staff</div>
       <div id="staff-list"></div>
-      <div class="add-staff-row" style="border-top: 0.5px solid var(--color-border-tertiary); padding-top: 1rem; margin-top: 1rem;">
-        <div class="form-group">
-          <label>Name</label>
-          <input type="text" id="new-name" placeholder="Full name" />
-        </div>
-        <div class="form-group">
-          <label>Role</label>
-          <input type="text" id="new-role" placeholder="e.g. Developer" />
-        </div>
-        <button class="btn btn-add" onclick="addStaff()">Add</button>
+      <div class="add-staff-grid">
+        <input type="text" id="new-name" placeholder="Full name" />
+        <input type="text" id="new-role" placeholder="Role" />
+        <button class="btn-add" onclick="addStaff()">+ Add Staff Member</button>
       </div>
-    </div>
-    <div class="card">
-      <div class="section-title">Settings</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:340px;">
-        <div class="form-group">
-          <label>Shift start time</label>
-          <input type="time" id="shift-start" value="07:00" onchange="saveSettings()" />
-      </div>
-      <div class="form-group">
-        <label>Shift end time</label>
-        <input type="time" id="shift-end" value="16:00" onchange="saveSettings()" />
-  </div>
-</div>
     </div>
   </div>
 </div>
 
 <script>
-const KEY_STAFF = 'sc_staff';
-const KEY_LOGS = 'sc_logs';
-const KEY_SETTINGS = 'sc_settings';
+// ── SOUTH AFRICAN PUBLIC HOLIDAYS 2024-2026 ──
+const SA_PUBLIC_HOLIDAYS = new Set([
+  '2024-01-01','2024-03-21','2024-03-29','2024-04-01','2024-04-27','2024-05-01',
+  '2024-05-29','2024-06-16','2024-06-17','2024-08-09','2024-09-24','2024-12-16',
+  '2024-12-25','2024-12-26',
+  '2025-01-01','2025-03-21','2025-04-18','2025-04-21','2025-04-27','2025-04-28',
+  '2025-05-01','2025-06-16','2025-08-09','2025-09-24','2025-12-16','2025-12-17',
+  '2025-12-25','2025-12-26',
+  '2026-01-01','2026-03-21','2026-04-03','2026-04-06','2026-04-27','2026-05-01',
+  '2026-06-16','2026-08-10','2026-09-24','2026-12-16','2026-12-25','2026-12-26',
+]);
 
-let staff = [];
-let logs = [];
-let settings = { shiftStart: '07:00', shiftEnd: '16:00'};
-let selectedStaff = null;
-let gpsCoords = null;
-let gpsStatus = 'loading';
-let clockInterval = null;
+function isSAPublicHoliday(date) {
+  const d = new Date(date);
+  const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  return SA_PUBLIC_HOLIDAYS.has(key);
+}
+
+function getDayType(dateISO) {
+  const d = new Date(dateISO);
+  const dow = d.getDay();
+  if (isSAPublicHoliday(d)) return 'ph';
+  if (dow === 0) return 'sunday';
+  if (dow === 6) return 'saturday';
+  return 'weekday';
+}
+
+function getOTRate(dayType) {
+  if (dayType === 'ph' || dayType === 'sunday') return 2.0;
+  if (dayType === 'saturday') return 1.5;
+  return 1.0;
+}
+
+// ── STORAGE ──
+const K_STAFF = 'sc2_staff', K_LOGS = 'sc2_logs', K_SETTINGS = 'sc2_settings';
+let staff = [], logs = [], settings = { shiftStart:'07:00', shiftEnd:'16:00', warnHours: 35 };
+let selectedStaff = null, gpsCoords = null, gpsWatchId = null;
 
 function load() {
-  try { staff = JSON.parse(localStorage.getItem(KEY_STAFF) || '[]'); } catch(e) { staff = []; }
-  try { logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]'); } catch(e) { logs = []; }
+  try { staff = JSON.parse(localStorage.getItem(K_STAFF)||'[]'); } catch(e){staff=[];}
+  try { logs = JSON.parse(localStorage.getItem(K_LOGS)||'[]'); } catch(e){logs=[];}
   try {
-    const s = JSON.parse(localStorage.getItem(KEY_SETTINGS) || 'null');
-    if (s) settings = s;
-    if (!settings.shiftStart) settings.shiftStart = '07:00';
-    if (!settings.shiftEnd) settings.shiftEnd = '16:00';
-  } catch(e) { settings = { shiftStart: '07:00', shiftEnd: '16:00' }; }
+    const s = JSON.parse(localStorage.getItem(K_SETTINGS)||'null');
+    if(s) settings = {...settings, ...s};
+  } catch(e){}
   if (!staff.length) {
     staff = [
-      { id: 's1', name: 'Adaan Els', role: 'Field Technician Manager' },
-      { id: 's2', name: 'Allan Nhlapo', role: 'Technician' },
-      { id: 's3', name: 'Alois Coetzee', role: 'Technician' },
-      { id: 's4', name: 'Bonga Mtongana', role: 'Technician' },
-      { id: 's5', name: 'Chance Mauba', role: 'Technician' },
-      { id: 's6', name: 'Glen Chilawo', role: 'Technician' },
-      { id: 's7', name: 'Godfrey Nkuna', role: 'Technician' },
-      { id: 's8', name: 'Kabelo Motaung', role: 'Technician' },
-      { id: 's9', name: 'Latin Ndlovu', role: 'Technician' },
-      { id: 's10', name: 'Macdonald Maaka', role: 'Technician' },
-      { id: 's11', name: 'Mario van Wyk', role: 'Technician' },
-      { id: 's12', name: 'Nkululeko Mbongwa', role: 'Technician' },
-      { id: 's13', name: 'Pule Mokone', role: 'Technician' },
-      { id: 's14', name: 'Sihle Ntuli', role: 'Technician' },
-      { id: 's15', name: 'Sindiso Sithole', role: 'Technician' },
-      { id: 's16', name: 'Sonnyboy Shabalala', role: 'Technician' },
-      { id: 's17', name: 'Thabang Mhlakaza', role: 'Technician' },
-      { id: 's18', name: 'Godfrey Nkuna', role: 'Technician' }
+      {id:'s1',name:'Adaan Els',role:'Field Technician Manager'},
+      {id:'s2',name:'Allan Nhlapo',role:'Technician'},
+      {id:'s3',name:'Alois Coetzee',role:'Technician'},
+      {id:'s4',name:'Bonga Mtongana',role:'Technician'},
+      {id:'s5',name:'Chance Mauba',role:'Technician'},
+      {id:'s6',name:'Glen Chilawo',role:'Technician'},
+      {id:'s7',name:'Godfrey Nkuna',role:'Technician'},
+      {id:'s8',name:'Kabelo Motaung',role:'Technician'},
+      {id:'s9',name:'Latin Ndlovu',role:'Technician'},
+      {id:'s10',name:'Macdonald Maaka',role:'Technician'},
+      {id:'s11',name:'Mario van Wyk',role:'Technician'},
+      {id:'s12',name:'Nkululeko Mbongwa',role:'Technician'},
+      {id:'s13',name:'Pule Mokone',role:'Technician'},
+      {id:'s14',name:'Sihle Ntuli',role:'Technician'},
+      {id:'s15',name:'Sindiso Sithole',role:'Technician'},
+      {id:'s16',name:'Sonnyboy Shabalala',role:'Technician'},
+      {id:'s17',name:'Thabang Mhlakaza',role:'Technician'},
+      {id:'s18',name:'Godfrey Nkuna 2',role:'Technician'},
     ];
     save();
   }
 }
 
 function save() {
-  localStorage.setItem(KEY_STAFF, JSON.stringify(staff));
-  localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
-  localStorage.setItem(KEY_SETTINGS, JSON.stringify(settings));
+  localStorage.setItem(K_STAFF, JSON.stringify(staff));
+  localStorage.setItem(K_LOGS, JSON.stringify(logs));
+  localStorage.setItem(K_SETTINGS, JSON.stringify(settings));
 }
 
-function uid() { return 'l' + Date.now() + Math.random().toString(36).slice(2,6); }
+// ── HELPERS ──
+function uid() { return 'l'+Date.now()+Math.random().toString(36).slice(2,5); }
 
 function fmt(mins) {
-  const h = Math.floor(mins/60);
-  const m = mins % 60;
-  return h + 'h ' + (m < 10 ? '0' : '') + m + 'm';
+  mins = Math.round(Math.abs(mins));
+  return Math.floor(mins/60)+'h '+String(mins%60).padStart(2,'0')+'m';
 }
 
-function fmtTime(iso) {
-  if (!iso) return '--';
-  const d = new Date(iso);
-  return d.toTimeString().slice(0,5);
-}
+function fmtTime(iso) { return iso ? new Date(iso).toTimeString().slice(0,5) : '--'; }
 
 function fmtDate(iso) {
-  if (!iso) return '--';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-ZA', {day:'2-digit', month:'short', year:'numeric'});
+  return iso ? new Date(iso).toLocaleDateString('en-ZA',{day:'2-digit',month:'short',year:'numeric'}) : '--';
 }
 
 function getMonthKey(iso) {
   const d = new Date(iso);
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
 
 function getMonthLabel(key) {
   const [y,m] = key.split('-');
-  const d = new Date(y, parseInt(m)-1, 1);
-  return d.toLocaleDateString('en-ZA', {month:'long', year:'numeric'});
+  return new Date(y,parseInt(m)-1,1).toLocaleDateString('en-ZA',{month:'long',year:'numeric'});
 }
 
- function shiftStartMins() {
-  const [h,m] = settings.shiftStart.split(':').map(Number);
-  return h * 60 + m;
-}
-function shiftEndMins() {
-  const [h,m] = settings.shiftEnd.split(':').map(Number);
-  return h * 60 + m;
-}
-function shiftDurationMins() {
-  return shiftEndMins() - shiftStartMins();
-}
-function timeOfDayMins(iso) {
+function todMins(iso) {
   const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
+  return d.getHours()*60 + d.getMinutes();
 }
-function calcOT(clockInISO, clockOutISO) {
-  if (!clockOutISO) return 0;
-  const inMins = timeOfDayMins(clockInISO);
-  const outMins = timeOfDayMins(clockOutISO);
+
+function shiftS() { const [h,m]=settings.shiftStart.split(':').map(Number); return h*60+m; }
+function shiftE() { const [h,m]=settings.shiftEnd.split(':').map(Number); return h*60+m; }
+
+function calcOTMins(clockInISO, clockOutISO, overrideStart, overrideEnd) {
+  const dayType = getDayType(clockInISO);
+  const inM = todMins(clockInISO);
+  const outM = clockOutISO ? todMins(clockOutISO) : (new Date().getHours()*60+new Date().getMinutes());
+  const duration = Math.max(0, Math.round((new Date(clockOutISO||Date.now()) - new Date(clockInISO))/60000));
+
+  if (dayType !== 'weekday') return duration;
+
+  const ss = overrideStart ? (()=>{const[h,m]=overrideStart.split(':').map(Number);return h*60+m;})() : shiftS();
+  const se = overrideEnd   ? (()=>{const[h,m]=overrideEnd.split(':').map(Number);return h*60+m;})()   : shiftE();
+
   let ot = 0;
-  if (inMins < shiftStartMins()) ot += (shiftStartMins() - inMins);
-  if (outMins > shiftEndMins()) ot += (outMins - shiftEndMins());
-  return ot;
+  if (inM < ss) ot += (ss - inM);
+  if (outM > se) ot += (outM - se);
+  return Math.min(ot, duration);
 }
-function calcOTLive(clockInISO) {
-  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
-  if (nowMins > shiftEndMins()) return nowMins - shiftEndMins();
-  return 0;
+
+function calcOTWeighted(clockInISO, clockOutISO, overrideStart, overrideEnd) {
+  const dayType = getDayType(clockInISO);
+  const rate = getOTRate(dayType);
+  const duration = Math.max(0, Math.round((new Date(clockOutISO||Date.now()) - new Date(clockInISO))/60000));
+  const otMins = calcOTMins(clockInISO, clockOutISO, overrideStart, overrideEnd);
+  return { otMins, rate, weighted: otMins * rate, duration, dayType };
 }
- 
-function getCurrentlyClockedIn(staffId) {
+
+function getActiveClock(staffId) {
   return logs.find(l => l.staffId === staffId && !l.clockOut);
 }
 
 function getAllMonths() {
-  const months = new Set();
-  const now = new Date();
-  months.add(getMonthKey(now.toISOString()));
-  logs.forEach(l => months.add(getMonthKey(l.clockIn)));
-  return Array.from(months).sort().reverse();
+  const s = new Set([getMonthKey(new Date().toISOString())]);
+  logs.forEach(l => s.add(getMonthKey(l.clockIn)));
+  return Array.from(s).sort().reverse();
 }
 
-function populateMonthSelects() {
-  const months = getAllMonths();
-  ['log-month-filter','monthly-filter'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = months.map(m => `<option value="${m}">${getMonthLabel(m)}</option>`).join('');
-  });
-}
-
-function populateStaffSelects() {
-  const el = document.getElementById('log-staff-filter');
-  if (!el) return;
-  el.innerHTML = '<option value="all">All staff</option>' +
-    staff.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-}
-
-function showTab(t) {
-  ['clock','logs','monthly','staff'].forEach(x => {
-    document.getElementById('tab-'+x).style.display = x === t ? '' : 'none';
-  });
-  document.querySelectorAll('.tab').forEach((el,i) => {
-    el.classList.toggle('active', ['clock','logs','monthly','staff'][i] === t);
-  });
-  if (t === 'logs') { populateMonthSelects(); populateStaffSelects(); renderLogs(); }
-  if (t === 'monthly') { populateMonthSelects(); renderMonthly(); }
-  if (t === 'staff') renderStaffList();
-  clearMsg();
-}
-
-function showMsg(txt, type) {
-  document.getElementById('msg-area').innerHTML = `<div class="msg msg-${type}">${txt}</div>`;
-}
-function clearMsg() { document.getElementById('msg-area').innerHTML = ''; }
-
-function startClock() {
-  if (clockInterval) clearInterval(clockInterval);
-  function tick() {
-    const now = new Date();
-    document.getElementById('live-clock').textContent = now.toTimeString().slice(0,8);
-    document.getElementById('live-date').textContent = now.toLocaleDateString('en-ZA', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    updateSessionInfo();
-  }
-  tick();
-  clockInterval = setInterval(tick, 1000);
-}
-
-function updateSessionInfo() {
-  if (!selectedStaff) return;
-  const active = getCurrentlyClockedIn(selectedStaff.id);
-  const info = document.getElementById('session-info');
-  const m = document.getElementById('todays-metrics');
-  if (active) {
-    const elapsed = Math.floor((Date.now() - new Date(active.clockIn).getTime()) / 60000);
-    const ot = Math.max(0, elapsed - settings.stdHours * 60);
-    info.style.display = '';
-    info.textContent = 'Currently clocked in since ' + fmtTime(active.clockIn) + ' · ' + fmt(elapsed) + ' elapsed' + (ot > 0 ? ' · ' + fmt(ot) + ' OT' : '');
-    m.style.display = '';
-    document.getElementById('m-in').textContent = fmtTime(active.clockIn);
-    document.getElementById('m-hours').textContent = (elapsed/60).toFixed(1) + 'h';
-    const otEl = document.getElementById('m-ot');
-    otEl.textContent = (ot/60).toFixed(1) + 'h';
-    otEl.className = 'metric-value ' + (ot > 0 ? 'ot' : 'ok');
-  } else {
-    info.style.display = 'none';
-    const todayLogs = logs.filter(l => l.staffId === selectedStaff.id && l.clockOut && fmtDate(l.clockIn) === fmtDate(new Date().toISOString()));
-    if (todayLogs.length) {
-      const total = todayLogs.reduce((s,l) => s + (l.durationMins||0), 0);
-      const ot = Math.max(0, total - settings.stdHours * 60);
-      m.style.display = '';
-      document.getElementById('m-in').textContent = fmtTime(todayLogs[0].clockIn);
-      document.getElementById('m-hours').textContent = (total/60).toFixed(1) + 'h';
-      document.getElementById('m-ot').textContent = (ot/60).toFixed(1) + 'h';
-      document.getElementById('m-ot').className = 'metric-value ' + (ot > 0 ? 'ot' : 'ok');
-    } else {
-      m.style.display = 'none';
-    }
-  }
-}
-
-function selectStaff(s) {
-  selectedStaff = s;
-  document.querySelectorAll('.staff-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById('sc-'+s.id).classList.add('selected');
-  document.getElementById('clock-panel').style.display = '';
-  const active = getCurrentlyClockedIn(s.id);
-  const btn = document.getElementById('clock-btn');
-  const otSec = document.getElementById('ot-section');
-  if (active) {
-    btn.textContent = 'Clock Out';
-    btn.className = 'btn btn-out';
-    otSec.style.display = '';
-  } else {
-    btn.textContent = 'Clock In';
-    btn.className = 'btn btn-in';
-    otSec.style.display = 'none';
-  }
-  updateSessionInfo();
-  startClock();
-  getGPS();
-}
-
-function getGPS() {
-  gpsStatus = 'loading';
-  gpsCoords = null;
+// ── GPS ──
+function startGPS() {
   const dot = document.getElementById('gps-dot');
   const txt = document.getElementById('gps-text');
+  const bar = document.getElementById('gps-bar');
   dot.className = 'gps-dot loading';
-  txt.textContent = 'Acquiring GPS location...';
+  bar.className = 'gps-bar loading';
+  txt.textContent = 'Acquiring location...';
+  gpsCoords = null;
+
   if (!navigator.geolocation) {
-    gpsStatus = 'error';
     dot.className = 'gps-dot error';
+    bar.className = 'gps-bar error';
     txt.textContent = 'GPS not available on this device';
     return;
   }
-  navigator.geolocation.getCurrentPosition(
+  if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+  gpsWatchId = navigator.geolocation.watchPosition(
     pos => {
-      gpsCoords = { lat: pos.coords.latitude.toFixed(5), lng: pos.coords.longitude.toFixed(5), acc: Math.round(pos.coords.accuracy) };
-      gpsStatus = 'ok';
+      gpsCoords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), acc: Math.round(pos.coords.accuracy) };
       dot.className = 'gps-dot';
-      txt.textContent = `Location: ${gpsCoords.lat}, ${gpsCoords.lng} (±${gpsCoords.acc}m)`;
+      bar.className = 'gps-bar';
+      txt.textContent = `${gpsCoords.lat}, ${gpsCoords.lng}  (±${gpsCoords.acc}m)`;
     },
-    err => {
-      gpsStatus = 'error';
+    () => {
       dot.className = 'gps-dot error';
-      txt.textContent = 'GPS unavailable — will record without location';
+      bar.className = 'gps-bar error';
+      txt.textContent = 'Location unavailable — will record without GPS';
     },
-    { enableHighAccuracy: true, timeout: 10000 }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
   );
+}
+
+// ── CLOCK PAGE ──
+function onStaffSelect(id) {
+  const s = staff.find(x => x.id === id);
+  if (!s) { document.getElementById('clock-panel').style.display='none'; selectedStaff=null; return; }
+  selectedStaff = s;
+  document.getElementById('clock-panel').style.display = '';
+  startGPS();
+  updateClockUI();
+}
+
+let tickInterval;
+function startTick() {
+  if (tickInterval) clearInterval(tickInterval);
+  tickInterval = setInterval(() => { updateClock(); if(selectedStaff) updateClockUI(); }, 1000);
+  updateClock();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('live-time').textContent = now.toTimeString().slice(0,8);
+  document.getElementById('live-date').textContent = now.toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+function updateClockUI() {
+  if (!selectedStaff) return;
+  const active = getActiveClock(selectedStaff.id);
+  const btn = document.getElementById('clock-btn');
+  const sessionCard = document.getElementById('session-active-card');
+  const otCard = document.getElementById('ot-auth-card');
+
+  if (active) {
+    btn.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg> Clock Out';
+    btn.className = 'btn btn-clockout';
+
+    const elapsed = Math.round((Date.now() - new Date(active.clockIn).getTime()) / 60000);
+    const dayType = getDayType(active.clockIn);
+    const otNow = calcOTMins(active.clockIn, null, active.overrideStart, active.overrideEnd);
+    const rate = getOTRate(dayType);
+
+    sessionCard.style.display = '';
+    document.getElementById('session-active-inner').innerHTML =
+      `<div class="session-active-label">Currently clocked in</div>
+       <div class="session-active-time">${selectedStaff.name} · since ${fmtTime(active.clockIn)}
+       ${dayType!=='weekday'?`<span class="badge ${dayType==='ph'?'badge-ph':'badge-weekend'} " style="margin-left:6px;">${dayType==='ph'?'Public Holiday':dayType==='saturday'?'Saturday':'Sunday'} ${rate}×</span>`:''}
+       </div>`;
+
+    document.getElementById('live-metrics').innerHTML =
+      `<div class="metric"><div class="metric-val green">${fmt(elapsed)}</div><div class="metric-lbl">Elapsed</div></div>
+       <div class="metric"><div class="metric-val ${otNow>0?'orange':'green'}">${fmt(otNow)}</div><div class="metric-lbl">OT mins</div></div>
+       <div class="metric"><div class="metric-val ${otNow>0?'red':'green'}">${(otNow*rate/60).toFixed(1)}h</div><div class="metric-lbl">Weighted OT</div></div>`;
+
+    otCard.style.display = otNow > 0 ? '' : 'none';
+  } else {
+    btn.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Clock In';
+    btn.className = 'btn btn-clockin';
+    sessionCard.style.display = 'none';
+    otCard.style.display = 'none';
+  }
+}
+
+function toggleOverride() {
+  const sec = document.getElementById('override-section');
+  const tog = document.getElementById('override-toggle-wrap');
+  if (sec.style.display === 'none') {
+    sec.style.display = '';
+    tog.querySelector('.toggle-override').textContent = '− Remove custom shift times';
+  } else {
+    sec.style.display = 'none';
+    tog.querySelector('.toggle-override').textContent = '+ Set custom shift times for today';
+  }
 }
 
 function handleClock() {
   if (!selectedStaff) return;
-  const active = getCurrentlyClockedIn(selectedStaff.id);
+  const active = getActiveClock(selectedStaff.id);
+  clearMsg('clock');
+
   if (!active) {
+    const overrideActive = document.getElementById('override-section').style.display !== 'none';
     const entry = {
-      id: uid(),
-      staffId: selectedStaff.id,
-      staffName: selectedStaff.name,
-      clockIn: new Date().toISOString(),
-      clockOut: null,
-      gpsIn: gpsCoords ? {...gpsCoords} : null,
-      gpsOut: null,
-      durationMins: null,
-      otMins: null,
-      otAuth: null,
+      id: uid(), staffId: selectedStaff.id, staffName: selectedStaff.name,
+      clockIn: new Date().toISOString(), clockOut: null,
+      gpsIn: gpsCoords ? {...gpsCoords} : null, gpsOut: null,
+      durationMins: null, otMins: null, otWeighted: null, otRate: null,
+      otAuth: null, dayType: getDayType(new Date().toISOString()),
+      overrideStart: overrideActive ? document.getElementById('override-start').value : null,
+      overrideEnd:   overrideActive ? document.getElementById('override-end').value   : null,
     };
     logs.unshift(entry);
     save();
-    showMsg(selectedStaff.name + ' clocked in at ' + fmtTime(entry.clockIn), 'success');
-    document.getElementById('clock-btn').textContent = 'Clock Out';
-    document.getElementById('clock-btn').className = 'btn btn-out';
-    document.getElementById('ot-section').style.display = '';
-    document.getElementById('ot-input').value = '';
-    renderStaffGrid();
+    showMsg('clock', `${selectedStaff.name} clocked in at ${fmtTime(entry.clockIn)}`, 'success');
+    updateClockUI();
+    populateDropdown();
   } else {
     const otAuth = document.getElementById('ot-input').value.trim();
-    const duration = Math.floor((Date.now() - new Date(active.clockIn).getTime()) / 60000);
-    const otMins = calcOT(active.clockIn, new Date().toISOString());
+    const {otMins, rate, weighted, duration, dayType} = calcOTWeighted(active.clockIn, new Date().toISOString(), active.overrideStart, active.overrideEnd);
+
     if (otMins > 0 && !otAuth) {
-      showMsg('Overtime detected (' + fmt(otMins) + '). Please enter an overtime authorisation number.', 'warn');
+      showMsg('clock', 'Overtime detected — please enter an authorisation number before clocking out.', 'warn');
       return;
     }
     active.clockOut = new Date().toISOString();
     active.gpsOut = gpsCoords ? {...gpsCoords} : null;
     active.durationMins = duration;
     active.otMins = otMins;
+    active.otRate = rate;
+    active.otWeighted = weighted;
     active.otAuth = otAuth || null;
     save();
-    showMsg(selectedStaff.name + ' clocked out. Total: ' + fmt(duration) + (otMins > 0 ? ' (OT: ' + fmt(otMins) + ' · Auth: ' + otAuth + ')' : ''), 'success');
-    document.getElementById('clock-btn').textContent = 'Clock In';
-    document.getElementById('clock-btn').className = 'btn btn-in';
-    document.getElementById('ot-section').style.display = 'none';
-    renderStaffGrid();
-    updateSessionInfo();
+    showMsg('clock', `${selectedStaff.name} clocked out. Total: ${fmt(duration)}${otMins>0?' · OT: '+fmt(otMins)+' ('+rate+'×)'   :''}`, 'success');
+    document.getElementById('ot-input').value = '';
+    updateClockUI();
+    populateDropdown();
   }
 }
 
-function renderStaffGrid() {
-  const grid = document.getElementById('staff-grid');
-  if (!staff.length) { grid.innerHTML = '<div class="empty">No staff added yet. Go to the Staff tab.</div>'; return; }
-  grid.innerHTML = staff.map(s => {
-    const active = getCurrentlyClockedIn(s.id);
-    return `<div class="staff-card${selectedStaff && selectedStaff.id===s.id?' selected':''}" id="sc-${s.id}" onclick='selectStaff(${JSON.stringify(s)})'>
-      <div class="staff-name">${s.name}</div>
-      <div class="staff-role">${s.role}</div>
-      <span class="staff-status ${active?'status-in':'status-out'}">${active?'Clocked in':'Clocked out'}</span>
-    </div>`;
-  }).join('');
-}
-
- function selectStaffFromDropdown(id) {
-  const s = staff.find(x => x.id === id);
-  if (!s) {
-    document.getElementById('clock-panel').style.display = 'none';
-    return;
-  }
-  selectStaff(s);
-}
-
+// ── LOGS PAGE ──
 function renderLogs() {
-  const sfFilter = document.getElementById('log-staff-filter').value;
-  const mFilter = document.getElementById('log-month-filter').value;
-  let filtered = logs.filter(l => {
-    if (sfFilter !== 'all' && l.staffId !== sfFilter) return false;
-    if (mFilter && getMonthKey(l.clockIn) !== mFilter) return false;
+  const sf = document.getElementById('log-staff-filter').value;
+  const mf = document.getElementById('log-month-filter').value;
+  const filtered = logs.filter(l => {
+    if (sf !== 'all' && l.staffId !== sf) return false;
+    if (mf && getMonthKey(l.clockIn) !== mf) return false;
     return true;
   });
   const body = document.getElementById('logs-body');
   if (!filtered.length) { body.innerHTML = '<div class="empty">No records found.</div>'; return; }
+
   body.innerHTML = `<table class="log-table">
     <thead><tr>
-      <th>Date</th><th>Staff</th><th>In</th><th>Out</th><th>Duration</th><th>OT</th><th>OT Auth</th><th>Location (In)</th>
+      <th>Date</th><th>Name</th><th>In</th><th>Out</th><th>Duration</th><th>OT</th><th>Auth</th><th>GPS In</th>
     </tr></thead>
-    <tbody>
-    ${filtered.map(l => {
+    <tbody>${filtered.map(l => {
+      const dt = l.dayType || getDayType(l.clockIn);
+      const dur = l.durationMins!=null ? fmt(l.durationMins) : (l.clockOut?'—':'<span class="badge badge-active">Active</span>');
       const gps = l.gpsIn ? `${l.gpsIn.lat},${l.gpsIn.lng}` : '—';
-      const dur = l.durationMins !== null ? fmt(l.durationMins) : (l.clockOut ? '—' : '<em>Active</em>');
-      const ot = l.otMins ? fmt(l.otMins) : '—';
+      const dtBadge = dt==='ph'?'<span class="badge badge-ph">P.Holiday</span>':dt==='saturday'?'<span class="badge badge-weekend">Sat 1.5×</span>':dt==='sunday'?'<span class="badge badge-weekend">Sun 2×</span>':'';
       return `<tr>
-        <td>${fmtDate(l.clockIn)}</td>
+        <td>${fmtDate(l.clockIn)} ${dtBadge}</td>
         <td>${l.staffName}</td>
-        <td>${fmtTime(l.clockIn)}</td>
-        <td>${l.clockOut ? fmtTime(l.clockOut) : '<em>—</em>'}</td>
+        <td>${fmtTime(l.clockIn)}${todMins(l.clockIn)<shiftS()&&dt==='weekday'?'<span class="badge badge-early" style="margin-left:4px;">early</span>':''}</td>
+        <td>${l.clockOut?fmtTime(l.clockOut):'—'}</td>
         <td>${dur}</td>
-        <td>${l.otMins > 0 ? '<span class="ot-badge">' + ot + '</span>' : '—'}</td>
-        <td style="font-size:12px; color:var(--color-text-secondary);">${l.otAuth || '—'}</td>
-        <td style="font-size:11px; color:var(--color-text-secondary);">${gps}</td>
+        <td>${l.otMins>0?`<span class="badge badge-ot">${fmt(l.otMins)} (${l.otRate||1}×)</span>`:'—'}</td>
+        <td style="font-size:11px;color:#64748b;">${l.otAuth||'—'}</td>
+        <td style="font-size:10px;color:#94a3b8;">${gps}</td>
       </tr>`;
-    }).join('')}
-    </tbody>
+    }).join('')}</tbody>
   </table>`;
 }
 
+// ── MONTHLY PAGE ──
 function renderMonthly() {
-  const mFilter = document.getElementById('monthly-filter').value;
+  const sf = document.getElementById('monthly-staff-filter').value;
+  const mf = document.getElementById('monthly-month-filter').value;
+  const warnMins = (settings.warnHours||35) * 60;
+
+  const monthLogs = logs.filter(l => l.clockOut && getMonthKey(l.clockIn) === mf && (sf==='all'||l.staffId===sf));
   const body = document.getElementById('monthly-body');
-  const monthLogs = logs.filter(l => l.clockOut && getMonthKey(l.clockIn) === mFilter);
-  if (!monthLogs.length) { body.innerHTML = '<div class="empty">No completed records for this month.</div>'; return; }
+  if (!monthLogs.length) { body.innerHTML = '<div class="empty" style="background:white;border-radius:14px;box-shadow:var(--shadow);padding:40px;">No completed records for this period.</div>'; return; }
 
   const byStaff = {};
-  staff.forEach(s => { byStaff[s.id] = { name: s.name, role: s.role, totalMins: 0, otMins: 0, days: 0 }; });
+  staff.forEach(s => { byStaff[s.id] = {name:s.name,role:s.role,totalMins:0,otMins:0,otWeighted:0,days:0,satMins:0,sunMins:0,phMins:0,wdOTMins:0}; });
   monthLogs.forEach(l => {
-    if (!byStaff[l.staffId]) byStaff[l.staffId] = { name: l.staffName, role: '', totalMins: 0, otMins: 0, days: 0 };
-    byStaff[l.staffId].totalMins += (l.durationMins || 0);
-    byStaff[l.staffId].otMins += (l.otMins || 0);
-    byStaff[l.staffId].days += 1;
+    if (!byStaff[l.staffId]) byStaff[l.staffId] = {name:l.staffName,role:'',totalMins:0,otMins:0,otWeighted:0,days:0,satMins:0,sunMins:0,phMins:0,wdOTMins:0};
+    const b = byStaff[l.staffId];
+    b.totalMins += (l.durationMins||0);
+    b.otMins += (l.otMins||0);
+    b.otWeighted += (l.otWeighted||0);
+    b.days++;
+    const dt = l.dayType || getDayType(l.clockIn);
+    if (dt==='saturday') b.satMins += (l.otMins||0);
+    else if (dt==='sunday') b.sunMins += (l.otMins||0);
+    else if (dt==='ph') b.phMins += (l.otMins||0);
+    else b.wdOTMins += (l.otMins||0);
   });
 
   const entries = Object.values(byStaff).filter(s => s.totalMins > 0);
-  const totalMins = entries.reduce((s,e) => s+e.totalMins, 0);
-  const totalOT = entries.reduce((s,e) => s+e.otMins, 0);
+  const totMins = entries.reduce((s,e)=>s+e.totalMins,0);
+  const totOT = entries.reduce((s,e)=>s+e.otWeighted,0);
+  const flagged = entries.filter(e=>e.totalMins>=warnMins).length;
 
-  body.innerHTML = `
-    <div class="metrics" style="margin-bottom:1.5rem;">
-      <div class="metric"><div class="metric-label">Total hours</div><div class="metric-value">${(totalMins/60).toFixed(1)}h</div></div>
-      <div class="metric"><div class="metric-label">Total OT hours</div><div class="metric-value ot">${(totalOT/60).toFixed(1)}h</div></div>
-      <div class="metric"><div class="metric-label">Team members</div><div class="metric-value">${entries.length}</div></div>
-    </div>
-    <div class="summary-grid">
-      ${entries.map(e => `
-        <div class="summary-card">
-          <div class="summary-name">${e.name}</div>
-          <div class="summary-detail">${e.role || ''} · ${e.days} day${e.days!==1?'s':''}</div>
-          <div class="summary-hours">${(e.totalMins/60).toFixed(1)}h</div>
-          ${e.otMins > 0 ? `<div class="summary-ot">OT: ${(e.otMins/60).toFixed(1)}h</div>` : ''}
-        </div>
-      `).join('')}
-    </div>
-  `;
+  let html = '';
+
+  if (sf === 'all') {
+    html += `<div class="summary-cards">
+      <div class="summary-stat"><div class="summary-stat-val">${(totMins/60).toFixed(1)}h</div><div class="summary-stat-lbl">Total hours</div></div>
+      <div class="summary-stat"><div class="summary-stat-val" style="color:var(--orange)">${(totOT/60).toFixed(1)}h</div><div class="summary-stat-lbl">Weighted OT hours</div></div>
+      <div class="summary-stat"><div class="summary-stat-val">${entries.length}</div><div class="summary-stat-lbl">Team members</div></div>
+      <div class="summary-stat"><div class="summary-stat-val" style="color:${flagged>0?'var(--amber)':'var(--teal)'}">${flagged}</div><div class="summary-stat-lbl">At/over ${settings.warnHours||35}h threshold</div></div>
+    </div>`;
+  }
+
+  entries.sort((a,b)=>b.totalMins-a.totalMins).forEach(e => {
+    const warn = e.totalMins >= warnMins;
+    html += `<div class="person-card ${warn?'warning':''}">
+      ${warn?`<div class="warn-flag" style="display:flex;">⚠ ${settings.warnHours||35}h threshold reached</div>`:''}
+      <div class="person-name">${e.name}</div>
+      <div class="person-role">${e.role} · ${e.days} session${e.days!==1?'s':''}</div>
+      <div class="person-stats">
+        <div class="person-stat"><div class="person-stat-val">${(e.totalMins/60).toFixed(1)}h</div><div class="person-stat-lbl">Total</div></div>
+        <div class="person-stat"><div class="person-stat-val" style="color:var(--orange)">${(e.wdOTMins/60).toFixed(1)}h</div><div class="person-stat-lbl">WD OT</div></div>
+        <div class="person-stat"><div class="person-stat-val" style="color:#7c3aed">${(e.satMins/60).toFixed(1)}h</div><div class="person-stat-lbl">Sat 1.5×</div></div>
+        <div class="person-stat"><div class="person-stat-val" style="color:var(--red)">${((e.sunMins+e.phMins)/60).toFixed(1)}h</div><div class="person-stat-lbl">Sun/PH 2×</div></div>
+      </div>
+      ${e.otWeighted>0?`<div style="margin-top:8px;font-size:12px;color:var(--text-muted);">Weighted OT total: <strong style="color:var(--orange)">${(e.otWeighted/60).toFixed(1)}h</strong></div>`:''}
+    </div>`;
+  });
+
+  body.innerHTML = html;
 }
 
-function renderStaffList() {
-  const el = document.getElementById('staff-list');
-  document.getElementById('std-hours').value = settings.stdHours;
-  if (!staff.length) { el.innerHTML = '<div class="empty">No staff yet.</div>'; return; }
-  el.innerHTML = `<table class="log-table" style="margin-bottom:1rem;">
-    <thead><tr><th>Name</th><th>Role</th><th></th></tr></thead>
-    <tbody>
-    ${staff.map(s => `<tr>
-      <td>${s.name}</td><td>${s.role}</td>
-      <td><button class="btn btn-sm" onclick="removeStaff('${s.id}')">Remove</button></td>
-    </tr>`).join('')}
-    </tbody>
-  </table>`;
+// ── SETTINGS PAGE ──
+function renderSettings() {
+  document.getElementById('set-start').value = settings.shiftStart;
+  document.getElementById('set-end').value = settings.shiftEnd;
+  document.getElementById('set-warn-hours').value = settings.warnHours || 35;
+  updateShiftNote();
+  const sl = document.getElementById('staff-list');
+  if (!staff.length) { sl.innerHTML = '<div class="empty">No staff yet.</div>'; return; }
+  sl.innerHTML = staff.map(s => `
+    <div class="staff-row">
+      <div><div class="staff-row-name">${s.name}</div><div class="staff-row-role">${s.role}</div></div>
+      <button class="btn-remove" onclick="removeStaff('${s.id}')">Remove</button>
+    </div>`).join('');
+}
+
+function updateShiftNote() {
+  const s=shiftS(), e=shiftE();
+  document.getElementById('shift-duration-note').textContent = `Standard shift: ${fmt(e-s)} per day`;
+}
+
+function saveSettings() {
+  settings.shiftStart = document.getElementById('set-start').value || '07:00';
+  settings.shiftEnd = document.getElementById('set-end').value || '16:00';
+  settings.warnHours = parseFloat(document.getElementById('set-warn-hours').value) || 35;
+  save();
+  updateShiftNote();
 }
 
 function addStaff() {
   const name = document.getElementById('new-name').value.trim();
   const role = document.getElementById('new-role').value.trim();
   if (!name) return;
-  staff.push({ id: 'S'+Date.now(), name, role: role || 'Staff' });
+  staff.push({id:'S'+Date.now(), name, role: role||'Staff'});
   document.getElementById('new-name').value = '';
   document.getElementById('new-role').value = '';
   save();
-  renderStaffList();
-  renderStaffGrid();
+  renderSettings();
+  populateDropdown();
 }
 
 function removeStaff(id) {
   if (!confirm('Remove this staff member?')) return;
-  staff = staff.filter(s => s.id !== id);
+  staff = staff.filter(s=>s.id!==id);
   save();
-  renderStaffList();
-  if (selectedStaff && selectedStaff.id === id) { selectedStaff = null; document.getElementById('clock-panel').style.display='none'; }
-  renderStaffGrid();
+  renderSettings();
+  populateDropdown();
+  if (selectedStaff && selectedStaff.id===id) { selectedStaff=null; document.getElementById('clock-panel').style.display='none'; }
 }
 
-function saveSettings() {
-  settings.shiftStart = document.getElementById('shift-start').value || '07:00';
-  settings.shiftEnd = document.getElementById('shift-end').value || '16:00';
-  save();
+// ── SHARED UI ──
+function populateDropdown() {
+  const dd = document.getElementById('staff-dropdown');
+  const cur = dd.value;
+  dd.innerHTML = '<option value="">— Select your name —</option>' +
+    staff.map(s => {
+      const active = getActiveClock(s.id);
+      return `<option value="${s.id}" ${cur===s.id?'selected':''}>${s.name}${active?' ✓':''}</option>`;
+    }).join('');
 }
+
+function populateFilters() {
+  const months = getAllMonths();
+  const monthOpts = months.map(m=>`<option value="${m}">${getMonthLabel(m)}</option>`).join('');
+  const staffOpts = '<option value="all">All staff</option>'+staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  ['log-month-filter','monthly-month-filter'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=monthOpts;
+  });
+  ['log-staff-filter','monthly-staff-filter'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=staffOpts;
+  });
+}
+
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  populateFilters();
+  if (name==='logs') renderLogs();
+  if (name==='monthly') renderMonthly();
+  if (name==='settings') renderSettings();
+}
+
+function showMsg(page, txt, type) {
+  const el = document.getElementById('msg-'+page);
+  if (!el) return;
+  el.innerHTML = `<div class="msg msg-${type}">${txt}</div>`;
+  setTimeout(()=>{ if(el) el.innerHTML=''; }, 5000);
+}
+function clearMsg(page) { const el=document.getElementById('msg-'+page); if(el) el.innerHTML=''; }
 
 function exportCSV() {
-  const sfFilter = document.getElementById('log-staff-filter').value;
-  const mFilter = document.getElementById('log-month-filter').value;
-  let filtered = logs.filter(l => {
-    if (sfFilter !== 'all' && l.staffId !== sfFilter) return false;
-    if (mFilter && getMonthKey(l.clockIn) !== mFilter) return false;
+  const sf = document.getElementById('log-staff-filter').value;
+  const mf = document.getElementById('log-month-filter').value;
+  const filtered = logs.filter(l=>{
+    if (sf!=='all'&&l.staffId!==sf) return false;
+    if (mf&&getMonthKey(l.clockIn)!==mf) return false;
     return true;
   });
-  const rows = [['Date','Staff','Clock In','Clock Out','Duration (mins)','OT (mins)','OT Auth','GPS In Lat','GPS In Lng','GPS Out Lat','GPS Out Lng']];
-  filtered.forEach(l => {
-    rows.push([
-      fmtDate(l.clockIn), l.staffName, fmtTime(l.clockIn), fmtTime(l.clockOut)||'',
-      l.durationMins||'', l.otMins||'', l.otAuth||'',
-      l.gpsIn?l.gpsIn.lat:'', l.gpsIn?l.gpsIn.lng:'',
-      l.gpsOut?l.gpsOut.lat:'', l.gpsOut?l.gpsOut.lng:''
-    ]);
+  const rows = [['Date','Staff','Role','Day Type','Clock In','Clock Out','Duration (mins)','OT Mins','OT Rate','Weighted OT Mins','OT Auth','GPS In Lat','GPS In Lng','GPS In Acc','GPS Out Lat','GPS Out Lng']];
+  filtered.forEach(l=>{
+    rows.push([fmtDate(l.clockIn),l.staffName,l.staffRole||'',l.dayType||'',fmtTime(l.clockIn),fmtTime(l.clockOut)||'',
+      l.durationMins||'',l.otMins||'',l.otRate||'',l.otWeighted||'',l.otAuth||'',
+      l.gpsIn?l.gpsIn.lat:'',l.gpsIn?l.gpsIn.lng:'',l.gpsIn?l.gpsIn.acc:'',
+      l.gpsOut?l.gpsOut.lat:'',l.gpsOut?l.gpsOut.lng:'']);
   });
-  const csv = rows.map(r => r.join(',')).join('\n');
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = '_' + (mFilter||'all') + '.csv';
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download = 'staffclock_'+mf+'.csv';
   a.click();
 }
 
+// ── INIT ──
 load();
-renderStaffGrid();
+populateDropdown();
+populateFilters();
+startTick();
 </script>
 </body>
 </html>
